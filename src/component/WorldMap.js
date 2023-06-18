@@ -1,63 +1,86 @@
-
 import React, { useState, useEffect } from "react";
-
-
 import { VectorMap } from "@react-jvectormap/core";
 import { worldMill } from "@react-jvectormap/world";
-
 import axios from "axios";
+import "../styles/styles.css"
 
-// Import the CountryInfo component.
 import CountryInfo from "./CountryInfo";
 
 const WorldMap = () => {
-  // State variables.
   const [countryCode, setCountryCode] = useState("in");
   const [country, setCountry] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // UseEffect hook to fetch country information when the country code changes.
   useEffect(() => {
     const fetchCountryInfo = async () => {
       try {
-        // Make an HTTP request to the restcountries.com API.
         const response = await axios.get(
           `https://restcountries.com/v3.1/alpha/${countryCode}`
         );
-
-        // Set the country state variable to the response data.
         setCountry(response.data[0]);
       } catch (error) {
-        // Log an error if the request fails.
         console.error("Some Error Occurred:", error);
       }
     };
     fetchCountryInfo();
   }, [countryCode]);
 
-  // Function to handle region clicks.
   const handleRegionClick = (event, code) => {
-
     setCountryCode(code);
   };
 
-  // Return the React component.
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    // Make an API request to search for the country based on the search query.
+    const searchCountry = async () => {
+      try {
+        const response = await axios.get(
+          `https://restcountries.com/v3.1/name/${searchQuery}`
+        );
+        if (response.data.length > 0) {
+          setCountryCode(response.data[0].cca3);
+          setSearchQuery("");
+        } else {
+          console.log("No country found.");
+        }
+      } catch (error) {
+        console.error("Some Error Occurred:", error);
+      }
+    };
+    searchCountry();
+  };
+  
+
   return (
     <div className="container">
       <div className="map">
+      <div className="search">
+        <form onSubmit={handleSearchSubmit}>
+          <input
+            type="text"
+            placeholder="Search Any Country"
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+          <button type="submit">Search</button>
+        </form>
+      </div>
         <VectorMap
           style={{ width: "100%", height: "100%" }}
           map={worldMill}
           onRegionClick={handleRegionClick}
         />
       </div>
+      
       <div className="country">
-        {country && (
-          <CountryInfo country={country} />
-        )}
+        {country && <CountryInfo country={country} />}
       </div>
     </div>
   );
 };
-
 
 export default WorldMap;
